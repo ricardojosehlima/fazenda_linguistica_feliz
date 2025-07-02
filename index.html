@@ -5,22 +5,22 @@
 <title>Linguística Shuffle</title>
 
 <!-- Fonte do Google Fonts (troque à vontade) -->
-<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 
 <style>
 :root{
-  --dur-escreve:3s;   /* tempo para digitar */
-  --dur-espera :4s;   /* tempo em que a frase fica visível */
-  --dur-some   :1s;   /* fade-out */
+  --dur-escreve:4s;   /* tempo para digitar */
+  --dur-espera :5s;   /* tempo em que a frase fica visível */
+  --dur-some   :3s;   /* fade-out */
 }
 *{box-sizing:border-box;margin:0}
 body{
-  display:flex;justify-content:center;align-items:center;height:100vh;
-  background:#f6f6f6;font-family:'Fira Code',monospace;
+  display:flex;justify-content:center;align-items:center;min-height:100%;
+  background:transparent;font-family:'Press Start 2P',monospace;
 }
 #card{
   max-width:650px;min-height:6rem;padding:2rem 3rem;
-  border-radius:1.25rem;background:#fff;
+  border-radius:1.25rem;background:#ffdd00ff;
   box-shadow:0 8px 24px rgba(0,0,0,.12);
   text-align:center;font-size:1.35rem;line-height:1.45;
   overflow:hidden;position:relative;
@@ -68,7 +68,7 @@ function digitar(frase){
 }
 
 /* ---------- 3. Loop automático ---------- */
-const durEscreve = 3000, durEspera = 4000, durSome = 1000;
+const durEscreve = 4000, durEspera = 5000, durSome = 3000;
 function ciclo(){
   const frase = frases[Math.floor(Math.random()*frases.length)];
   digitar(frase);
