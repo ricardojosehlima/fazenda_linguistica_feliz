@@ -36,6 +36,12 @@ body{
 <!-- Cartão que receberá as frases -->
 <div id="card"><!-- conteúdo será inserido via JS --></div>
 
+<div id="controles" style="margin-top:1rem;display:flex;gap:.8rem;justify-content:center">
+  <button id="playPause">⏸️ Pausar</button>
+  <button id="colher">📋 Colher</button>
+  <button id="armazenar">💾 Armazenar</button>
+</div>
+
 <script>
 /* ---------- 1. Elemento do cartão já disponível --------- */
 const carta = document.getElementById('card');
@@ -75,6 +81,64 @@ function ciclo(){
   setTimeout(()=>carta.classList.add('fadeout'), durEscreve+durEspera);
   setTimeout(ciclo, durEscreve+durEspera+durSome);
 }
+
+/* handles dos timeouts globais */
+let handleFade, handleNext;
+let rodando = true;       // começa em Play
+
+function pausar(){
+  if(!rodando) return;
+  clearTimeout(handleFade);
+  clearTimeout(handleNext);
+  rodando = false;
+  playPause.textContent = '▶️ Plantar';
+}
+
+function retomar(){
+  if(rodando) return;
+  rodando = true;
+  playPause.textContent = '⏸️ Pausar';
+  ciclo();                // reinicia ciclo (mostra nova frase)
+}
+
+playPause.onclick = ()=> rodando ? pausar() : retomar();
+
+handleFade = setTimeout(()=>carta.classList.add('fadeout'), escreve+espera);
+handleNext = setTimeout(ciclo, escreve+espera+some);
+
+function copiarFrase(){
+  navigator.clipboard.writeText(carta.textContent.trim())
+    .then(()=>console.log('Copiado!'));
+}
+
+colher.onclick = ()=>{
+  copiarFrase();
+  pausar();               // usa a função do controle 1
+};
+
+let estoque = [];                 // arr de frases
+armazenar.onclick = ()=>{
+  const fraseAtual = carta.textContent.trim();
+  estoque.push(fraseAtual);
+  copiarFrase();                  // já copia p/ área de transf.
+
+  if(estoque.length === 10){
+     baixarArquivo();
+     estoque = [];                // limpa o buffer
+  }
+};
+
+function baixarArquivo(){
+  const blob = new Blob([estoque.join('\n')], {type:'text/plain'});
+  const url  = URL.createObjectURL(blob);
+  const a    = Object.assign(document.createElement('a'),{
+                 href:url, download:'frases_coletadas.txt'});
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 
 /* ---------- 4. Carrega JSON e inicia ---------- */
 let frases = [];
