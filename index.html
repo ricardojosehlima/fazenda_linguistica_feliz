@@ -4,23 +4,31 @@
 <meta charset="utf-8">
 <title>Linguística Shuffle</title>
 
-<!-- Fonte do Google Fonts (troque à vontade) -->
+<!-- Fonte pixel-retro -->
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 
 <style>
 :root{
+  /* ajuste só aqui ↓↓↓ */
   --dur-escreve:4s;   /* tempo para digitar */
-  --dur-espera :5s;   /* tempo em que a frase fica visível */
-  --dur-some   :3s;   /* fade-out */
+  --dur-espera :5s;   /* frase parada na tela */
+  --dur-some   :2s;   /* fade-out            */
 }
+
+/* ——— aparência geral ——— */
 *{box-sizing:border-box;margin:0}
 body{
-  display:flex;justify-content:center;align-items:center;min-height:100%; padding:2rem;
-  background:transparent;font-family:'Press Start 2P',monospace;
+  display:flex;justify-content:center;align-items:center;
+  min-height:100%;padding:2rem;
+  background:transparent;
+  font-family:'Press Start 2P',monospace;
 }
+
+/* ——— cartão ——— */
 #card{
-  max-width:650px;min-height:6rem;padding:2rem 3rem;
-  border-radius:1.25rem;background:#ffdd00ff;
+  max-width:650px;min-height:6rem;
+  padding:2rem 3rem;border-radius:1.25rem;
+  background:#fff;                        /* cor do cartão */
   box-shadow:0 8px 24px rgba(0,0,0,.12);
   text-align:center;font-size:1rem;line-height:1.45;
   overflow:hidden;position:relative;
@@ -29,44 +37,67 @@ body{
 @keyframes show{to{opacity:1}}
 .fadeout{animation:fade var(--dur-some) forwards}
 @keyframes fade{to{opacity:0}}
+
+/* ——— controles ——— */
+#controles{
+  margin-top:1.2rem;display:flex;gap:.8rem;justify-content:center;
+}
+#controles button{
+  font-size:.75rem;padding:.45rem .9rem;border-radius:.5rem;
+  cursor:pointer;border:1px solid #666;background:#fafafa;
+}
 </style>
 </head>
 <body>
 
-<!-- Cartão que receberá as frases -->
-<div id="card"><!-- conteúdo será inserido via JS --></div>
+<div id="wrap">
+  <!-- cartão -->
+  <div id="card"></div>
 
-<div id="controles" style="margin-top:1rem;display:flex;gap:.8rem;justify-content:center">
-  <button id="playPause">⏸️ Pausar</button>
-  <button id="colher">📋 Colher</button>
-  <button id="armazenar">💾 Armazenar</button>
+  <!-- controles -->
+  <div id="controles">
+    <button id="playPause">⏸️ Pausar</button>
+    <button id="colher">📋 Colher</button>
+  </div>
 </div>
 
 <script>
-/* ---------- 1. Elemento do cartão já disponível --------- */
-const carta = document.getElementById('card');
+/* ——— util: ler variáveis CSS e converter “4s” → 4000 ms ——— */
+const ms = v => parseFloat(v)*1000;
+function lerDuracoes(){
+  const s = getComputedStyle(document.documentElement);
+  return {
+    escreve: ms(s.getPropertyValue('--dur-escreve')),
+    espera : ms(s.getPropertyValue('--dur-espera')),
+    some   : ms(s.getPropertyValue('--dur-some'))
+  };
+}
 
-/* ---------- 2. Função que escreve uma frase (typewriter) */
+/* ——— referências e estado global ——— */
+const carta      = document.getElementById('card');
+const playPause  = document.getElementById('playPause');
+const colher     = document.getElementById('colher');
+
+let frases       = [];          // carregadas do JSON
+let rodando      = true;        // começa em “play”
+let handleFade, handleNext;     // IDs dos timeouts
+
+/* ——— anima o texto ——— */
 function digitar(frase){
-  carta.className='';          // limpa classes anteriores
+  carta.className='';                       // remove fade/outros
   carta.style.opacity=1;
-  carta.innerHTML='';          // zera conteúdo
+  carta.innerHTML='';
 
-const durEscreve = 3000, durEspera = 4000, durSome = 1000;
-
-  // a) Linha principal animada
   const linha = document.createElement('p');
-  linha.style.margin='0';
-  [...frase.texto].forEach((ch,i,arr)=>{
-     const span=document.createElement('span');
-     span.textContent=ch;
-     span.style.animationDelay =
-       (i*(parseFloat(getComputedStyle(document.documentElement)
-       .getPropertyValue('--dur-escreve'))/arr.length))+'s';
-     linha.appendChild(span);
+  [...frase.texto].forEach((ch,i,a)=>{
+    const span = document.createElement('span');
+    span.textContent = ch;
+    span.style.animationDelay =
+      (i* ms(getComputedStyle(document.documentElement)
+             .getPropertyValue('--dur-escreve'))/a.length)+'ms';
+    linha.appendChild(span);
   });
 
-  // b) Categoria (mostra inteira de uma vez)
   const cat = document.createElement('p');
   cat.textContent = '↳ '+frase.categoria;
   cat.style='margin-top:1rem;font-size:.9rem;opacity:.6;';
@@ -75,85 +106,53 @@ const durEscreve = 3000, durEspera = 4000, durSome = 1000;
   carta.classList.add('typing');
 }
 
-/* ---------- 3. Loop automático ---------- */
-const durEscreve = 4000, durEspera = 5000, durSome = 3000;
+/* ——— loop principal ——— */
 function ciclo(){
+  const {escreve, espera, some} = lerDuracoes();
   const frase = frases[Math.floor(Math.random()*frases.length)];
+
   digitar(frase);
-  setTimeout(()=>carta.classList.add('fadeout'), durEscreve+durEspera);
-  setTimeout(ciclo, durEscreve+durEspera+durSome);
+
+  handleFade = setTimeout(()=>carta.classList.add('fadeout'), escreve+espera);
+  handleNext = setTimeout(ciclo, escreve+espera+some);
 }
 
-/* handles dos timeouts globais */
-let handleFade, handleNext;
-let rodando = true;       // começa em Play
-
+/* ——— controles play/pause ——— */
 function pausar(){
   if(!rodando) return;
   clearTimeout(handleFade);
   clearTimeout(handleNext);
+  carta.classList.remove('fadeout');              // mantém visível
   rodando = false;
-  playPause.textContent = '▶️ Plantar';
+  playPause.textContent='▶️ Plantar';
 }
-
 function retomar(){
   if(rodando) return;
   rodando = true;
-  playPause.textContent = '⏸️ Pausar';
-  ciclo();                // reinicia ciclo (mostra nova frase)
+  playPause.textContent='⏸️ Pausar';
+  ciclo();                                        // retoma fluxo
 }
-
 playPause.onclick = ()=> rodando ? pausar() : retomar();
 
-handleFade = setTimeout(()=>carta.classList.add('fadeout'), durEscreve+durEspera);
-handleNext = setTimeout(ciclo, durEscreve+durEspera+durSome);
-
-
+/* ——— botão Colher (copiar + pausar) ——— */
 function copiarFrase(){
-  navigator.clipboard.writeText(carta.textContent.trim())
-    .then(()=>console.log('Copiado!'));
+  navigator.clipboard.writeText(carta.textContent.trim());
 }
-
 colher.onclick = ()=>{
   copiarFrase();
-  pausar();               // usa a função do controle 1
+  pausar();
 };
 
-let estoque = [];                 // arr de frases
-armazenar.onclick = ()=>{
-  const fraseAtual = carta.textContent.trim();
-  estoque.push(fraseAtual);
-  copiarFrase();                  // já copia p/ área de transf.
-
-  if(estoque.length === 10){
-     baixarArquivo();
-     estoque = [];                // limpa o buffer
-  }
-};
-
-function baixarArquivo(){
-  const blob = new Blob([estoque.join('\n')], {type:'text/plain'});
-  const url  = URL.createObjectURL(blob);
-  const a    = Object.assign(document.createElement('a'),{
-                 href:url, download:'frases_coletadas.txt'});
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
-
-
-/* ---------- 4. Carrega JSON e inicia ---------- */
-let frases = [];
+/* ——— carregar frases e iniciar ——— */
 fetch('frases.json')
   .then(r=>r.json())
   .then(data=>{
-      frases = data;
-      ciclo();                // só inicia quando tudo pronto
+     frases = data;
+     ciclo();
   })
-  .catch(err=>{               // debug rápido se JSON falhar
-      carta.textContent = 'Erro ao carregar frases.json 🥲';
-      console.error('Problema ao ler JSON:', err);
+  .catch(err=>{
+     carta.textContent='Erro ao carregar frases.json 🥲';
+     console.error(err);
   });
 </script>
 </body>
