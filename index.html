@@ -136,8 +136,47 @@ playPause.onclick = ()=> rodando ? pausar() : retomar();
 
 /* ——— botão Colher (copiar + pausar) ——— */
 function copiarFrase(){
-  navigator.clipboard.writeText(carta.textContent.trim());
+  const txt = carta.textContent.trim();
+
+  /* 1) tenta Clipboard API moderna */
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(txt).then(()=>notify('Copiado!'))
+      .catch(()=>fallbackCopy(txt));
+  } else {
+    fallbackCopy(txt);
+  }
 }
+
+/* 2) fallback em sandbox */
+function fallbackCopy(texto){
+  const ta = document.createElement('textarea');
+  ta.value = texto;
+  ta.style.position='fixed';        // impede scroll
+  ta.style.left='-9999px';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+
+  try {
+    const ok = document.execCommand('copy');
+    notify(ok ? 'Copiado!' : 'Falhou 😕');
+  } catch(e){
+    notify('Cópia bloqueada');
+  }
+  document.body.removeChild(ta);
+}
+
+/* 3) mini-toast opcional */
+function notify(msg){
+  const n = document.createElement('div');
+  n.textContent = msg;
+  n.style = 'position:fixed;bottom:1rem;left:50%;transform:translateX(-50%);'
+          + 'background:#222;color:#fff;padding:.4rem .8rem;border-radius:.5rem;'
+          + 'font-size:.75rem;z-index:9999';
+  document.body.appendChild(n);
+  setTimeout(()=>n.remove(), 1200);
+}
+
 colher.onclick = ()=>{
   copiarFrase();
   pausar();
