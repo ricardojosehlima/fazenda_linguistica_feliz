@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Fazenda Linguística Feliz</title>
+
+<!-- 1) FONTE personalizada (ex.: Fira Code)  -->
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+:root{
+  --dur-escreve:3s;   /* tempo para digitar */
+  --dur-espera :4s;   /* quanto tempo a frase fica inteira na tela */
+  --dur-some   :1s;   /* fade-out */
+}
+body{
+  margin:0;
+  display:flex;justify-content:center;align-items:center;height:100vh;
+  background:#f6f6f6;font-family:'Fira Code',monospace;
+}
+#card{
+  max-width:650px;padding:2rem 3rem;border-radius:1.25rem;
+  background:white;box-shadow:0 8px 24px rgba(0,0,0,.12);
+  font-size:1.35rem;line-height:1.45;text-align:center;
+  min-height:6rem;          /* evita pulo entre frases curtas/longas */
+  overflow:hidden;          /* esconde texto enquanto “digitando”    */
+  position:relative;
+}
+.fadeout{animation:fade var(--dur-some) forwards}
+@keyframes fade{to{opacity:0}}
+.typing span{
+  opacity:0; animation:show .05s linear forwards;
+}
+@keyframes show{to{opacity:1}}
+</style>
+</head><body>
+
+<div id="card"></div>
+
+<script>
+// 1. CARREGAR frases via fetch
+let frases = [];
+fetch('frases.json')
+  .then(r => r.json())
+  .then(data => {
+     frases = data;
+     ciclo();           // começa o loop depois de carregar
+  });
+
+const carta   = document.getElementById('card');
+
+// 2. FUNÇÃO que escreve texto + categoria
+function digitar(frase){
+  carta.className='';                      // reset animações
+  carta.style.opacity=1;
+  carta.innerHTML='';
+
+  // a) texto principal (typewriter)
+  const linha = document.createElement('p');
+  linha.style.margin='0';
+  [...frase.texto].forEach( (ch,i,arr)=>{
+     const span=document.createElement('span');
+     span.textContent=ch;
+     span.style.animationDelay = (i* (durEscreve/arr.length))+'s';
+     linha.appendChild(span);
+  });
+
+  // b) categoria (aparece depois, discreto)
+  const cat = document.createElement('p');
+  cat.textContent = '↳ '+frase.categoria;
+  cat.style = 'margin-top:1rem;font-size:.9rem;opacity:.6;';
+
+  carta.append(linha, cat);
+  carta.classList.add('typing');
+}
+
+// 3. LOOP automático
+const durEscreve = 3000, durEspera=4000, durSome=1000;
+function ciclo(){
+   const frase = frases[Math.floor(Math.random()*frases.length)];
+   digitar(frase);
+
+   setTimeout(()=>carta.classList.add('fadeout'), durEscreve+durEspera);
+   setTimeout(ciclo, durEscreve+durEspera+durSome);
+}
+</script>
+</body></html>
