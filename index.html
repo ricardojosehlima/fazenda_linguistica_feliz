@@ -2,83 +2,92 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<title>Fazenda Linguística Feliz</title>
+<title>Linguística Shuffle</title>
 
-<!-- 1) FONTE personalizada (ex.: Fira Code)  -->
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<!-- Fonte do Google Fonts (troque à vontade) -->
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
+
 <style>
 :root{
   --dur-escreve:3s;   /* tempo para digitar */
-  --dur-espera :4s;   /* quanto tempo a frase fica inteira na tela */
+  --dur-espera :4s;   /* tempo em que a frase fica visível */
   --dur-some   :1s;   /* fade-out */
 }
+*{box-sizing:border-box;margin:0}
 body{
-  margin:0;
   display:flex;justify-content:center;align-items:center;height:100vh;
   background:#f6f6f6;font-family:'Fira Code',monospace;
 }
 #card{
-  max-width:650px;padding:2rem 3rem;border-radius:1.25rem;
-  background:white;box-shadow:0 8px 24px rgba(0,0,0,.12);
-  font-size:1.35rem;line-height:1.45;text-align:center;
-  min-height:6rem;          /* evita pulo entre frases curtas/longas */
-  overflow:hidden;          /* esconde texto enquanto “digitando”    */
-  position:relative;
+  max-width:650px;min-height:6rem;padding:2rem 3rem;
+  border-radius:1.25rem;background:#fff;
+  box-shadow:0 8px 24px rgba(0,0,0,.12);
+  text-align:center;font-size:1.35rem;line-height:1.45;
+  overflow:hidden;position:relative;
 }
+.typing span{opacity:0;animation:show .05s linear forwards}
+@keyframes show{to{opacity:1}}
 .fadeout{animation:fade var(--dur-some) forwards}
 @keyframes fade{to{opacity:0}}
-.typing span{
-  opacity:0; animation:show .05s linear forwards;
-}
-@keyframes show{to{opacity:1}}
 </style>
-</head><body>
+</head>
+<body>
 
-<div id="card"></div>
+<!-- Cartão que receberá as frases -->
+<div id="card"><!-- conteúdo será inserido via JS --></div>
 
 <script>
-// 1. CARREGAR frases via fetch
-const frases = [
-  { texto: "Teste OK 1", categoria: "debug" },
-  { texto: "Teste OK 2", categoria: "debug" }
-];
-     ciclo();           // começa o loop depois de carregar
+/* ---------- 1. Elemento do cartão já disponível --------- */
+const carta = document.getElementById('card');
 
-const carta   = document.getElementById('card');
-
-// 2. FUNÇÃO que escreve texto + categoria
+/* ---------- 2. Função que escreve uma frase (typewriter) */
 function digitar(frase){
-  carta.className='';                      // reset animações
+  carta.className='';          // limpa classes anteriores
   carta.style.opacity=1;
-  carta.innerHTML='';
+  carta.innerHTML='';          // zera conteúdo
 
-  // a) texto principal (typewriter)
+  // a) Linha principal animada
   const linha = document.createElement('p');
   linha.style.margin='0';
-  [...frase.texto].forEach( (ch,i,arr)=>{
+  [...frase.texto].forEach((ch,i,arr)=>{
      const span=document.createElement('span');
      span.textContent=ch;
-     span.style.animationDelay = (i* (durEscreve/arr.length))+'s';
+     span.style.animationDelay =
+       (i*(parseFloat(getComputedStyle(document.documentElement)
+       .getPropertyValue('--dur-escreve'))/arr.length))+'s';
      linha.appendChild(span);
   });
 
-  // b) categoria (aparece depois, discreto)
+  // b) Categoria (mostra inteira de uma vez)
   const cat = document.createElement('p');
   cat.textContent = '↳ '+frase.categoria;
-  cat.style = 'margin-top:1rem;font-size:.9rem;opacity:.6;';
+  cat.style='margin-top:1rem;font-size:.9rem;opacity:.6;';
 
-  carta.append(linha, cat);
+  carta.append(linha,cat);
   carta.classList.add('typing');
 }
 
-// 3. LOOP automático
-const durEscreve = 3000, durEspera=4000, durSome=1000;
+/* ---------- 3. Loop automático ---------- */
+const durEscreve = 3000, durEspera = 4000, durSome = 1000;
 function ciclo(){
-   const frase = frases[Math.floor(Math.random()*frases.length)];
-   digitar(frase);
-
-   setTimeout(()=>carta.classList.add('fadeout'), durEscreve+durEspera);
-   setTimeout(ciclo, durEscreve+durEspera+durSome);
+  const frase = frases[Math.floor(Math.random()*frases.length)];
+  digitar(frase);
+  setTimeout(()=>carta.classList.add('fadeout'), durEscreve+durEspera);
+  setTimeout(ciclo, durEscreve+durEspera+durSome);
 }
+
+/* ---------- 4. Carrega JSON e inicia ---------- */
+let frases = [];
+fetch('frases.json')
+  .then(r=>r.json())
+  .then(data=>{
+      frases = data;
+      ciclo();                // só inicia quando tudo pronto
+  })
+  .catch(err=>{               // debug rápido se JSON falhar
+      carta.textContent = 'Erro ao carregar frases.json 🥲';
+      console.error('Problema ao ler JSON:', err);
+  });
 </script>
-</body></html>
+</body>
+</html>
