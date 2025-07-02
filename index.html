@@ -52,6 +52,8 @@ function digitar(frase){
   carta.style.opacity=1;
   carta.innerHTML='';          // zera conteúdo
 
+const durEscreve = 3000, durEspera = 4000, durSome = 1000;
+
   // a) Linha principal animada
   const linha = document.createElement('p');
   linha.style.margin='0';
@@ -103,8 +105,9 @@ function retomar(){
 
 playPause.onclick = ()=> rodando ? pausar() : retomar();
 
-handleFade = setTimeout(()=>carta.classList.add('fadeout'), escreve+espera);
-handleNext = setTimeout(ciclo, escreve+espera+some);
+handleFade = setTimeout(()=>carta.classList.add('fadeout'), durEscreve+durEspera);
+handleNext = setTimeout(ciclo, durEscreve+durEspera+durSome);
+
 
 function copiarFrase(){
   navigator.clipboard.writeText(carta.textContent.trim())
