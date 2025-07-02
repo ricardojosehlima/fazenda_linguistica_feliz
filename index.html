@@ -38,13 +38,11 @@ body{
 
 <script>
 // 1. CARREGAR frases via fetch
-let frases = [];
-fetch('frases.json')
-  .then(r => r.json())
-  .then(data => {
-     frases = data;
+const frases = [
+  { texto: "Teste OK 1", categoria: "debug" },
+  { texto: "Teste OK 2", categoria: "debug" }
+];
      ciclo();           // começa o loop depois de carregar
-  });
 
 const carta   = document.getElementById('card');
 
