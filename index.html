@@ -193,6 +193,20 @@ fetch('frases.json')
      carta.textContent='Erro ao carregar frases.json 🥲';
      console.error(err);
   });
+  
+  /* ——— CONTADOR DE VISITAS ——— */
+fetch('https://api.countapi.xyz/hit/fazenda_linguistica_feliz/visitas')
+  .then(r => r.json())
+  .then(d => {
+      // cria elemento e mostra total
+      const v = document.createElement('p');
+      v.style='margin-top:1rem;font-size:.75rem;opacity:.6;';
+      v.textContent = `Visitas: ${d.value}`;
+      // coloca logo abaixo dos botões
+      document.getElementById('controles').after(v);
+  })
+  .catch(console.error);
+  
 </script>
 </body>
 </html>
